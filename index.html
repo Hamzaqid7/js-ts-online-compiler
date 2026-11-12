@@ -24,10 +24,23 @@
     }
   });
 </script>
+<!-- Connections opened early so the non-blocking CSS/font requests start sooner -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<!-- Bootstrap + Google Fonts: loaded without blocking first paint (media swap pattern) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400..700&display=swap" media="print" onload="this.media='all'">
+<noscript>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400..700&display=swap">
+</noscript>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400..700;1,400..700&display=swap');
-@import url('Fonts/Consolas.ttf');
+/* Consolas: use the installed font if present, otherwise download the file (only when needed) */
+@font-face{font-family:'Consolas';font-style:normal;font-weight:400;font-display:swap;
+  src:local('Consolas'),local('Consolas Regular'),url('Fonts/Consolas.ttf') format('truetype')}
+@font-face{font-family:'Consolas';font-style:normal;font-weight:700;font-display:swap;
+  src:local('Consolas Bold'),local('Consolas-Bold')}
 /* Hide the main application content by default */
         #app-container {
             display: none;
@@ -351,17 +364,24 @@ main {
   align-items: center;
   justify-content: space-between;
   background: var(--bg, #161b22);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 2px solid rgb(124, 58, 237, 0.7);
   padding: 12px 20px;
   font-family: var(--font-default, monospace);
-  font-size: 12px;
-  color: #8b949e;
+  font-weight: 400;
+  font-size: 14px;
+  color: #1a1a1a;
   margin: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   z-index: 1;
   margin-top: 2rem;
+}
+[data-theme = "dark"] .compiler-footer, .shortcut-hint kbd {
+  color: #c9d1d9;
+}
+[data-theme = "light"] .shortcut-hint kbd {
+  color: #1a1a1a;
 }
 .footer-left {
   display: flex;
@@ -371,9 +391,9 @@ main {
 .status-dot {
   width: 7px;
   height: 7px;
-  background-color: var(--st, #2ea043);
+  background-color: #7c3aed;
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(46, 160, 67, 0.4);
+  box-shadow: 0 0 6px rgb(124, 58, 237, 0.7);
 }
 .footer-center {
   display: flex;
@@ -381,11 +401,10 @@ main {
 }
 .shortcut-hint kbd {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(124, 58, 237, 0.7);
   border-radius: 4px;
   padding: 1px 5px;
-  font-size: 11px;
-  color: #c9d1d9;
+  font-size: 12px;
 }
 .footer-right {
   display: flex;
@@ -393,7 +412,7 @@ main {
   gap: 10px;
 }
 .footer-link {
-  color: #8b949e;
+  color: #7c3aed;
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -401,11 +420,10 @@ main {
   color: var(--kw, #7c3aed);
 }
 .separator {
-  color: rgba(255, 255, 255, 0.2);
+  color: rgb(124, 58, 237, 0.7);
 }
 .version {
   margin-left: 6px;
-  color: rgba(255, 255, 255, 0.4);
 }
 </style>
 </head>
@@ -442,7 +460,6 @@ main {
   function finish(){
     finished=true;p=100;paint();
     lis.forEach(function(li){li.classList.add("on");ok(li)});
-    if(!window.ts){var l=lis[1];l.classList.remove("ok");l.classList.add("warn");l.querySelector(".ld-t").textContent="TypeScript compiler unavailable"}
     setTimeout(function(){L.classList.add("done");root.classList.remove("ld-on")},reduce?0:350);
     setTimeout(function(){if(L.parentNode)L.parentNode.removeChild(L)},1100);
   }
@@ -501,7 +518,7 @@ main {
       <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" class="footer-link">Documentation</a>
       <span class="separator">/</span>
       <a href="https://github.com/Hamzaqid7" target="_blank" class="footer-link">GitHub</a>
-      <span class="version">v1.0.4</span>
+      <span class="version">v1.0.5</span>
     </div>
   </div>
 </footer>
@@ -603,10 +620,11 @@ main {
         }
       }
 
-      function resizeCanvas() {
-        const rect = container.getBoundingClientRect();
-        width = Math.max(1, rect.width);
-        height = Math.max(1, rect.height);
+      // Size comes from the ResizeObserver entry, so no layout is forced by reading geometry.
+      function resizeCanvas(entry) {
+        const box = entry.borderBoxSize && entry.borderBoxSize[0];
+        width = Math.max(1, box ? box.inlineSize : entry.contentRect.width);
+        height = Math.max(1, box ? box.blockSize : entry.contentRect.height);
         dpr = Math.min(window.devicePixelRatio || 1, CONFIG.maxDpr);
 
         canvas.width = Math.round(width * dpr);
@@ -775,6 +793,7 @@ main {
       }
 
       function renderFrame() {
+        if (!gridPath) return; // geometry not built yet (first ResizeObserver callback pending)
         const th = themeNow();
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, width, height);
@@ -833,9 +852,9 @@ main {
 
       window.addEventListener("pointermove", e => {
         if (e.pointerType === "touch") return;
-        const r = container.getBoundingClientRect();
-        pointer.tx = e.clientX - r.left;
-        pointer.ty = e.clientY - r.top;
+        // .laser-grid is position:fixed; inset:0, so viewport coords == container coords
+        pointer.tx = e.clientX;
+        pointer.ty = e.clientY;
         pointer.target = 1;
         if (!pointer.seen || !rafId) {
           pointer.x = pointer.tx; pointer.y = pointer.ty; pointer.seen = true;
@@ -852,11 +871,14 @@ main {
       themeObserver = new MutationObserver(() => { if (!rafId) queueRender(); });
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-      resizeObserver = new ResizeObserver(resizeCanvas);
+      let gridReady = false;
+      resizeObserver = new ResizeObserver(entries => {
+        resizeCanvas(entries[entries.length - 1]);
+        if (!gridReady) { gridReady = true; handleMotionPreference(); }
+      });
+      // The first callback fires automatically before the first paint, so no synchronous
+      // resizeCanvas() call (which forced a reflow) is needed.
       resizeObserver.observe(container);
-
-      resizeCanvas();
-      handleMotionPreference();
 
       window.addEventListener("pagehide", () => {
         stop();
@@ -865,11 +887,22 @@ main {
       }, { once: true });
     })();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/typescript/5.4.5/typescript.min.js"></script>
 <script>
 // If JavaScript is running, reveal the application content
   document.getElementById('app-container').style.display = 'inherit';
 const $=id=>document.getElementById(id);
+/* TypeScript compiler (~700 KB) is loaded on demand, never on the critical path */
+const TS_SRC="https://cdnjs.cloudflare.com/ajax/libs/typescript/5.4.5/typescript.min.js";
+let tsPromise=null,tsLoading=false;
+function loadTS(){
+ if(window.ts)return Promise.resolve();
+ return tsPromise||(tsPromise=new Promise((res,rej)=>{
+  const sc=document.createElement("script");sc.src=TS_SRC;sc.async=true;
+  sc.onload=()=>res();
+  sc.onerror=()=>{tsPromise=null;sc.remove();rej(new Error("TypeScript compiler failed to load"))};
+  document.head.appendChild(sc);
+ }));
+}
 const SAMPLES={
 js:{"Hello World":`console.log("Hello, World!");`,
 "Fibonacci":`const fib = n => n < 2 ? n : fib(n - 1) + fib(n - 2);\nfor (let i = 0; i < 10; i++) console.log(\`fib(\${i}) = \${fib(i)}\`);`,
@@ -888,13 +921,13 @@ function lines(){const n=code.value.split("\n").length;$("lni").textContent=Arra
 function gut(){$("lni").style.transform="translateY("+(-wrap.scrollTop)+"px)"}
 function hl(){const e=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");const re=/(\/\/.*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|\b(\d[\d_.]*n?)\b|\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|from|default|async|await|try|catch|finally|throw|typeof|instanceof|in|of|this|super|null|undefined|true|false|void|delete|interface|type|enum|implements|public|private|protected|readonly|static|as|keyof|namespace|declare|abstract)\b|\b(string|number|boolean|any|unknown|never|object|symbol|bigint|Array|Promise|Map|Set|Record|console)\b|([A-Za-z_$][\w$]*)(?=\s*\()|(===|!==|==|!=|<=|>=|=>|\+\+|--|&&|\|\||\?\?|[+\-*\/%=<>!&|^~?])|([{}\[\]();:])|([,.])|([A-Za-z_$][\w$]*)/g;let o="",i=0,t=code.value,m;while((m=re.exec(t))){o+=e(t.slice(i,m.index));const c=m[1]?"cm":m[2]?"st":m[3]?"nm":m[4]?"kw":m[5]?"ty":m[6]?"fn":m[7]?"op":m[8]?"bk":m[9]?"pn":"id";o+='<span class="'+c+'">'+e(m[0])+'</span>';i=re.lastIndex}o+=e(t.slice(i));const h=$("hl");h.innerHTML=o+"\n"}
 function pos(){const s=code.selectionStart,e=code.selectionEnd,p=code.value.slice(0,s).split("\n"),c=$("cl");$("pos").textContent=`Ln ${p.length}, Col ${p[p.length-1].length+1}`+(e>s?` (${e-s} selected)`:"");c.style.setProperty("--cl",p.length-1);c.classList.toggle("on",e===s)}
-function syncSeg(){document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang))}
+function syncSeg(){document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang));if(lang==="ts")loadTS().catch(()=>{})}
 function saveActive(){const t=cur();if(!t)return;save();t.s=code.selectionStart;t.e=code.selectionEnd;t.sc=wrap.scrollTop}
 function renderTabs(){const n=$("tabs");n.textContent="";tabs.forEach(t=>{const b=document.createElement("button");b.type="button";b.className="nav-link"+(t.id===active?" active":"");b.setAttribute("role","tab");b.setAttribute("aria-selected",t.id===active);b.title=t.name;b.appendChild(document.createTextNode(t.name));if(t.id!=="main"){const x=document.createElement("i");x.className="x";x.textContent="×";x.title="Close";x.onclick=e=>{e.stopPropagation();closeTab(t.id)};b.appendChild(x)}b.onclick=()=>activate(t.id);n.appendChild(b)})}
 function activate(id){const t=tabs.find(x=>x.id===id);if(!t)return;saveActive();active=id;lang=t.lang;syncSeg();code.value=id==="main"?load(lang):t.content;renderTabs();lines();pos();code.setSelectionRange(t.s||0,t.e||0);wrap.scrollTop=t.sc||0;wrap.scrollLeft=0;hl();gut()}
 function closeTab(id){const i=tabs.findIndex(t=>t.id===id);if(i<1)return;const was=active===id;tabs.splice(i,1);if(was){active="";activate(tabs[i-1].id)}else renderTabs()}
 function setLang(l){saveActive();active="main";tabs[0].lang=l;tabs[0].name="main."+l;lang=l;syncSeg();code.value=load(l);renderTabs();lines();pos()}
-document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>setLang(b.dataset.l));
+document.querySelectorAll("#lang button").forEach(b=>{b.onclick=()=>setLang(b.dataset.l);if(b.dataset.l==="ts"){const w=()=>loadTS().catch(()=>{});b.addEventListener("pointerenter",w,{once:true});b.addEventListener("focus",w,{once:true})}});
 code.addEventListener("input",()=>{lines();pos();save()});
 wrap.addEventListener("scroll",gut);
 code.addEventListener("scroll",()=>{code.scrollTop=0;code.scrollLeft=0});
@@ -953,12 +986,19 @@ function boot(){
  addEventListener("error",e=>{send("error",[e.message]);e.preventDefault()});
  addEventListener("unhandledrejection",e=>{send("error",["Uncaught (in promise) "+(e.reason&&e.reason.message||e.reason)]);e.preventDefault()});
 }
-function run(){
+async function run(){
  if($("run").disabled)return;setRan(true);
  if(kill){kill();kill=null}
- out.textContent="";let js=code.value;
+ out.textContent="";
+ if(lang==="ts"&&!window.ts){
+  if(tsLoading)return;tsLoading=true;
+  log("Loading TypeScript compiler…","");
+  try{await loadTS();out.textContent=""}
+  catch(e){out.textContent="";log("TypeScript compiler failed to load (check your connection).","l-error");return}
+  finally{tsLoading=false}
+ }
+ let js=code.value;
  if(lang==="ts"){
-  if(!window.ts){log("TypeScript compiler failed to load (check your connection).","l-error");return}
   const r=ts.transpileModule(js,{reportDiagnostics:true,compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.ESNext}});
   const d=r.diagnostics||[];if(d.length){d.forEach(x=>{const p=x.file?x.file.getLineAndCharacterOfPosition(x.start):{line:0,character:0};log(`${cur().name}(${p.line+1},${p.character+1}): ${ts.flattenDiagnosticMessageText(x.messageText,"\n")}`,"l-error")});return}
   js=r.outputText}
@@ -994,8 +1034,11 @@ const end=()=>{s.classList.remove("drag");document.body.style.userSelect="";docu
 s.onkeydown=e=>{const d={ArrowLeft:-24,ArrowRight:24}[e.key];if(d){e.preventDefault();set(document.querySelector(".p-ed").getBoundingClientRect().right+d)}};
 s.ondblclick=()=>m.style.removeProperty("--lr")})();
 document.querySelectorAll('button, select').forEach(el => {
+  let rect = null;
+  el.addEventListener('mouseenter', () => { rect = el.getBoundingClientRect(); });
+  el.addEventListener('mouseleave', () => { rect = null; });
   el.addEventListener('mousemove', (e) => {
-    const rect = el.getBoundingClientRect();
+    if (!rect) rect = el.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     el.style.setProperty('--x', `${x}px`);
