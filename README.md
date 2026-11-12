@@ -27,7 +27,7 @@
 Once you deploy to GitHub Pages (see [Deployment](#deployment)), your demo will be available at:
 
 ```
-https://<your-username>.github.io/<repository-name>/
+https://hamzaqid7.github.io/js-ts-online-compiler/
 ```
 
 Replace this section with the real link and add a screenshot or GIF, e.g. `![Screenshot](docs/screenshot.png)`.
