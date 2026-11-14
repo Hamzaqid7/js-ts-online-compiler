@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hamzaqid7.github.io/js-ts-online-compiler/sitemap.xml
