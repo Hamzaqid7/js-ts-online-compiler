@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>JS &amp; TS Online Compiler</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Write, compile, and execute JavaScript and TypeScript code online with a fast, interactive compiler. Test snippets, debug code, and experiment instantly without installation.">
+<meta name="keywords" content="Online JavaScript Compiler, Online TypeScript Compiler, JavaScript Code Editor, Run JavaScript Online">
 <link rel="icon" type="image/ico" href="favicon.ico">
 <script>(function(){var t=null;try{t=localStorage.getItem("theme")}catch(e){}if(t!=="dark"&&t!=="light")t="dark";var r=document.documentElement;r.dataset.theme=t;r.setAttribute("data-bs-theme",t)})();</script>
 <script>
@@ -27,6 +29,23 @@
       event.preventDefault();
     }
   });
+  document.querySelectorAll("body a").forEach(link => {
+
+    link.addEventListener("click", function (event) {
+
+        const currentURL = new URL(window.location.href);
+        const targetURL = new URL(this.href);
+
+        if (currentURL.href === targetURL.href) {
+
+            // Prevent unnecessary page reload
+            event.preventDefault();
+
+            // Notify the user
+            alert("You're already viewing this page.");
+        }
+    });
+});
 </script>
 <!-- Connections opened early so the non-blocking CSS/font requests start sooner -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
