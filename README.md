@@ -5,7 +5,7 @@
 **A fast, zero-install JavaScript & TypeScript playground that runs entirely in your browser.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
-![Version](https://img.shields.io/badge/version-1.0.4-5b8cff)
+![Version](https://img.shields.io/badge/version-1.0.2-5b8cff)
 ![No build step](https://img.shields.io/badge/build-none-4cc27f)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-3178c6?logo=typescript&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.3-7952b3?logo=bootstrap&logoColor=white)
