@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>JS &amp; TS Online Compiler</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Run JavaScript and TypeScript code instantly in your browser with this free, lightweight, ad-free online compiler.">
 <link rel="icon" type="image/ico" href="favicon.ico">
 <script>(function(){var t=null;try{t=localStorage.getItem("theme")}catch(e){}if(t!=="dark"&&t!=="light")t="dark";var r=document.documentElement;r.dataset.theme=t;r.setAttribute("data-bs-theme",t)})();</script>
 <script>
   // 1. Disable Right-Click Context Menu
   document.addEventListener('contextmenu', function (event) {
+    if (event.target.closest('.editor')) {
+      return;
+    }
+
     event.preventDefault();
   });
   // 2. Disable DevTools Keyboard Shortcuts
@@ -32,16 +35,17 @@
 <!-- Bootstrap + Google Fonts: loaded without blocking first paint (media swap pattern) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400..700&display=swap" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:wght@400..600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400..700&display=swap">
 </noscript>
 <style>
 /* Consolas: use the installed font if present, otherwise download the file (only when needed) */
-@font-face{font-family:'Consolas';font-style:normal;font-weight:400;font-display:swap;
-  src:local('Consolas'),local('Consolas Regular'),url('Fonts/Consolas.ttf') format('truetype')}
-@font-face{font-family:'Consolas';font-style:normal;font-weight:700;font-display:swap;
-  src:local('Consolas Bold'),local('Consolas-Bold')}
+@font-face{font-family:'Google Sans Code';font-style:normal;font-weight:400;font-display:swap;
+  src:local('Google Sans Code'),local('Consolas Regular'),url('Fonts/GoogleSansCode-Regular.ttf') format('truetype')}
+@font-face{font-family:'Google Sans Code';font-style:normal;font-weight:600;font-display:swap;
+  src:local('Google Sans Code SemiBold'),local('GoogleSansCode-SemiBold')}
 /* Hide the main application content by default */
         #app-container {
             display: none;
@@ -86,19 +90,23 @@
   scrollbar-width: auto; /* Makes it wider/default */
   scrollbar-color: var(--kw, #7c3aed) var(--bg, #1d2330); /* Thumb and track colors */
 }
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f9;--pn:#fff;--tx:#1d2330;--mu:#6b7380;--bd:#d9dde4;--ac:#2f6fed;--ok:#1a8f4c;--er:#d93a3a;--hd:#eef0f4;--kw:#7c3aed;--st:#2a8a3a;--nm:#c25a00;--cm:#8a93a3;--fn:#2f6fed;--ty:#0e8a9a;--op:#0f766e;--pu:#64748b;--bk:#c98a00;--id:#9a3412;--gut-bg:#eef0f4;--gut-fg:#6b7380; --font-default: 'Montserrat', sans-serif, system-ui; --font-code: 'Consolas', 'Courier New', monospace; --code-color: #9a6700;color-scheme:light;--page:#eef1f6;--dot:rgba(0,0,0,.07);}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f9;--pn:#fff;--tx:#1d2330;--mu:#6b7380;--bd:#d9dde4;--ac:#2f6fed;--ok:#1a8f4c;--er:#d93a3a;--hd:#eef0f4;--kw:#7c3aed;--st:#2a8a3a;--nm:#c25a00;--cm:#8a93a3;--fn:#2f6fed;--ty:#0e8a9a;--op:#0f766e;--pu:#64748b;--bk:#c98a00;--id:#9a3412;--gut-bg:#eef0f4;--gut-fg:#6b7380; --font-default: 'Montserrat', sans-serif, system-ui; --font-code: 'Google Sans Code', monospace; --code-color: #9a6700;color-scheme:light;--page:#eef1f6;--dot:rgba(0,0,0,.07);}
 :root:not([data-theme="light"]){}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#12151b;--pn:#1a1e26;--tx:#e6e9ef;--mu:#8a93a3;--bd:#2d3340;--ac:#5b8cff;--ok:#4cc27f;--er:#ff6b6b;--hd:#222733;--kw:#c678dd;--st:#8fd18a;--nm:#f0a050;--cm:#6b7380;--fn:#6ea8ff;--ty:#56d4e0;--op:#56b6c2;--pu:#abb2bf;--bk:#c98a00;--id:#e5c07b;--gut-bg:#333;--gut-fg:#fff;--page:#08090d;--dot:rgba(255,255,255,.05);--code-color:#c98a00}}
 :root[data-theme="dark"]{color-scheme:dark;--bg:#12151b;--pn:#1a1e26;--tx:#e6e9ef;--mu:#8a93a3;--bd:#2d3340;--ac:#5b8cff;--ok:#4cc27f;--er:#ff6b6b;--hd:#222733;--kw:#c678dd;--st:#8fd18a;--nm:#f0a050;--cm:#6b7380;--fn:#6ea8ff;--ty:#56d4e0;--op:#56b6c2;--pu:#abb2bf;--bk:#c98a00;--id:#e5c07b;--gut-bg:#333;--gut-fg:#fff;--page:#08090d;--dot:rgba(255,255,255,.05);--code-color:#c98a00}
 *{box-sizing:inherit}html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--tx);font:14px 'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column}
 span{cursor:default;}
-header{display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0px;background:transparent;border-bottom:1px solid var(--bd);flex-wrap:wrap; max-width: 100%; width: 100%; z-index: 1;}
+header{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 0px;background:#00000031;border-bottom:2px solid #a626a4;flex-wrap:wrap; max-width: 100%; width: 100%; z-index: 1;}
+[data-theme = "dark"] header {background: #ffffff30;}
 .parent-container{display:flex;align-self:center;align-items:center; justify-content: space-between;gap:10px;padding:8px 14px;background:transparent;flex-wrap:wrap; margin: 0; max-width: 1440px; width: 90%;}
 h1{font-size:1.6rem;margin:0 auto 0 0}h1 b{color:var(--ac)}
 [data-theme="dark"] button:hover, select:hover, #ex:hover, #up:hover,  #dl:hover {
   color: #e2e8f0;
 }
+[data-theme="dark"] #ex,[data-theme="dark"] #up,[data-theme="dark"]  #dl {background: linear-gradient(135deg,  #7c3aed 0%, #192bab 100%);}
+[data-theme="dark"] .off {color: #000;}
+[data-theme="dark"] #ex:hover, [data-theme="dark"] #up:hover, [data-theme="dark"] #dl:hover {color: #000;}
 button:hover, select:hover, #ex:hover, #up:hover,  #dl:hover {
   color: #7c3aed;
 }
@@ -107,8 +115,8 @@ button, select, #ex, #up,  #dl {
   font-size: 14px;
   font-weight: 600;
   color: #e2e8f0;
-  background: linear-gradient(135deg, var(--kw, #7c3aed) 0%, #6d28d9 100%);
-  border: 1px solid var(--bd, #e2e8f0);
+  background: linear-gradient(135deg, var(--kw, #7c3aed) 0%, var(--tvc) 100%);
+  border: none;
   border-radius: 6px;
   padding: 8px 18px;
   cursor: pointer;
@@ -122,7 +130,7 @@ button, select, #ex, #up,  #dl {
 button:hover, select:hover, #ex:hover, #up:hover,  #dl:hover {
   border-color: var(--kw, #7c3aed);
   color: #e2e8f0;
-  background: #1a1a1a;
+  background: linear-gradient(135deg, var(--kw, #7c3aed) 0%, var(--tvc) 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(124, 58, 237, 0.18), 
               0 2px 6px rgba(29, 35, 48, 0.06);
@@ -131,14 +139,16 @@ button:active, select:active {
   transform: translateY(0);
   box-shadow: 0 3px 10px rgba(124, 58, 237, 0.22);
 }
-.run{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:600}.stop{background:var(--er);border-color:var(--er);color:#fff;display:none}
-.seg{display:flex;}.seg button{ border: 1px solid #7c3aed; border-radius: 6px;}.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}
+.stop{display:none}
+.seg{display:flex;}.seg button{ border: none; border-radius: 6px;}.seg button:first-child{border-radius:6px 0 0 6px;
+    z-index: 1;}.seg button:last-child{border-radius:0 6px 6px 0;
+    z-index: 1;};
 .seg .on{background:var(--ac);border-color:var(--ac);color:#fff}
 main{flex:1;display:flex;min-height:90vh;gap:0;padding:8px; z-index: 1; max-width: 1440px; width: 90%; align-self: center;}
 .pane{flex:1;display:flex;flex-direction:column;width: 100%; max-width:100%; min-width:50%;background:var(--pn);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
 .bar{display:flex;align-items:center;gap:8px;padding:6px 16px;background:var(--hd);border-bottom:1px solid var(--bd);color:var(--mu);font-size:14px; min-height:49px;}
 .bar span:first-child{margin-right:auto;font-weight:600}
-.ed{flex:1;display:flex;min-height:0;font:13px/1.55 'Montserrat', sans-serif, system-ui}
+.ed{position:relative;flex:1;display:flex;min-height:0;font:13px/1.55 'Montserrat', sans-serif, system-ui}
 /* Gutter: content is moved with a transform (not scrollTop) so it always stays aligned with the code, even when a horizontal scrollbar is showing */
 #ln{flex-shrink:0;min-width:calc(1ch + 16px);margin:0;padding:0 8px;overflow:hidden;text-align:center;white-space:pre;font-family:var(--font-code);font-size:14px;line-height:1.8em;box-sizing:border-box;user-select:none;background-color:var(--bs-secondary);color:var(--gut-bg) !important;border-right:1px solid var(--bd)}
 [data-theme = "dark"] #ln{background-color:var(--gut-bg);color:var(--gut-fg) !important}
@@ -149,7 +159,7 @@ main{flex:1;display:flex;min-height:90vh;gap:0;padding:8px; z-index: 1; max-widt
   /* Creates Faint Dot Matrix (Halftone) Pattern */
   background-image: radial-gradient(var(--dot) 1px, transparent 1px);
 background-size: 24px 24px;}
-#code,#hl{margin:0;border:0;padding:18px;box-sizing:border-box;font-family:var(--font-code) !important;white-space:pre;tab-size:4;font-weight:500;line-height:1.8em;letter-spacing:.3px;word-spacing:2px}
+#code,#hl,#fm,#mir{margin:0;border:0;padding:18px;box-sizing:border-box;font-family:var(--font-code) !important;white-space:pre;tab-size:4;font-weight:500;line-height:1.8em;letter-spacing:.3px;word-spacing:2px}
 #hl{position:relative;display:block;overflow:visible;pointer-events:none;color:var(--tx)}
 #code{position:absolute;inset:0;width:100%;height:100%;outline:0;resize:none;overflow:hidden;background:transparent;color:transparent;caret-color:yellowgreen}
 #code::placeholder{color:var(--mu);opacity:.7;font-style:italic}
@@ -163,32 +173,39 @@ background-size: 24px 24px;}
 .l-error{color:var(--er)}.l-warn{color:#c98a00}.l-info{color:var(--ac)}.sys{color:var(--mu)}
 #iw{position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;border:0}
 h1{background:linear-gradient(90deg,#2f6fed,#a626a4,#e8590c);-webkit-background-clip:text;background-clip:text;color:transparent}h1 b{color:inherit}
-header{border-bottom:3px solid var(--ac)}
 .seg [data-l=js].on {
     background: #e8590c;
     border-color: transparent;
     color: #e2e8f0;
     box-shadow: -18px 0px 24px 4px rgb(232, 89, 12);
 }.seg [data-l=ts].on{background:#3178c6;border-color:#3178c6;color:#fff; box-shadow: 18px 0px 24px 4px rgb(49, 120, 198);}
-#clr{background:var(--er);border-color:var(--er);color:#fff}
 .p-ed .bar{border-top:3px solid #3178c6}.p-out .bar{border-top:3px solid var(--ok)}
 .p-ed .bar span:first-child{color:#3178c6}.p-out .bar span:first-child{color:var(--ok)}
 #stat{color:var(--ok);font-weight:600}
 .l-log{color: var(--code-color)}
 header button{min-height:34px}
-.ibtn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:34px;padding:0;color:var(--tx);background:var(--hd);transition:color .15s,border-color .15s,background .15s}
+.ibtn{display:inline-flex;align-items:center;justify-content:center;width:60px;height:34px;padding:0;color:#fff;background:var(--hd);font-weight: 600;transition:color .15s,border-color .15s,background .15s}
 .ibtn svg{width:19px;height:19px;display:block;pointer-events:none}
-.ibtn:hover:not(:disabled){color:var(--ac);border-color:var(--ac)}
+.ibtn:hover:not(:disabled){color:#fff;border:none;}
+[type=button]:not(:disabled) {
+    background: linear-gradient(135deg,  #7c3aed 0%, #192bab 100%);
+}
+#fdn {background: #1E293B;}
+[type=button]:disabled {
+    background: color-mix(in srgb,var(--act-bg) 86%,var(--tx));
+    color: #7fe3ef;
+    border: 1px solid #7fe3ef;
+}
 .fsz .ibtn+.ibtn{margin-left:-1px}
 #th .i-sun{display:none}
 :root[data-theme="dark"] #th .i-sun{display:block}:root[data-theme="dark"] #th .i-moon{display:none}
-button:disabled{opacity:.4;cursor:not-allowed}button:disabled:hover{border-color:var(--bd)}.l-warn{background:rgba(201,138,0,.12)}.l-error{background:rgba(217,58,58,.12)}
+button:disabled{opacity:.4;cursor:not-allowed}button:disabled:hover{border:none;}.l-warn{background:rgba(201,138,0,.12)}.l-error{background:rgba(217,58,58,.12)}
 .p-ed{flex:0 1 calc((100% - 12px) * var(--lr,.6));min-width:280px}.right{flex:1 1 0;min-width:280px}
 .split{flex:0 0 12px;cursor:col-resize;display:flex;align-items:center;justify-content:center;touch-action:none;outline:0}
 .split::before{content:"";width:4px;height:44px;border-radius:3px;background:var(--bd);transition:background .15s}
 .split:hover::before,.split:focus-visible::before,.split.drag::before{background:var(--ac)}
 .tabbar{padding:6px 36px 0;align-items:center;gap:4px;border-bottom:0;background:linear-gradient(var(--bd),var(--bd)) bottom/100% 1px no-repeat,var(--hd)}
-.tabbar #pos{padding-bottom:7px;white-space:nowrap}
+.tabbar #pos{padding-bottom:4px;white-space:nowrap}
 .nav-tabs{display:flex;flex-wrap:nowrap;flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;margin:0;padding:0;border:0;list-style:none;scrollbar-width:thin}
 .nav-tabs .nav-link{display:flex;align-items:center;gap:12px;flex:none;margin-top:7px;padding:7px 14px;font-size:14px;line-height:1.4;font-weight:400;color:var(--mu);background:transparent;border:1px solid transparent;border-radius:6px 6px 0 0;white-space:nowrap}
 .nav-tabs .nav-link:hover{color:var(--tx);border-color:transparent}
@@ -198,19 +215,27 @@ button:disabled{opacity:.4;cursor:not-allowed}button:disabled:hover{border-color
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */}.scroll-container::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
-}.p-ed{flex:none;min-width:0;height:60vh}.right{flex:none;min-width:0}.p-out{flex:none;height:300px}.split{display:none}.pane{min-height:240px}}
+}
+.p-ed{flex:none;min-width:0;height:60vh}.right{flex:none;min-width:0}.p-out{flex:none;height:300px}.split{display:none}.pane{min-height:240px}}
 /* Editor / output / input toolbar buttons (re-use the existing palette) */
 .tools{display:flex;gap:12px;flex:none;padding-bottom:6px; margin-right: 1rem;}
-#ecp, #eclr, #ocp, #clr {padding:2px 20px !important; font-size:14px !important; line-height:1.5em; font-weight:600; border-radius:6px; cursor:pointer; transition:background .15s, border-color .15s; text-transform:uppercase; letter-spacing:.5px; font-family:var(--font-code);}
-#ecp:hover, #eclr:hover{opacity:.9}
-#eclr{background:var(--er);border-color:var(--er);color:#fff}
-#ecp,#ocp{background:#0e8a9a;border-color:#0e8a9a;color:#fff}
 button:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 #out:empty::before{content:"Output will appear here after you run your code (Ctrl + Enter).";color:var(--mu);font-style:italic}
 #toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,10px);max-width:calc(100vw - 32px);padding:8px 14px;border-radius:6px;background:var(--tx);color:var(--pn);font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:1080}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 @media(prefers-reduced-motion:reduce){#toast,#cl{transition:none}}
 @media (max-width: 992px) { main { flex-direction: column; } .right{ flex-direction: row;} .split::before{display: none;} .p-ed {min-height: 70vh;} .right {min-height: auto;} header .parent-container {justify-content: center; gap: 1rem}}
+@media(max-width: 374px) {
+.compiler-footer {
+  padding-inline: 0px !important;
+}
+.parent-container {
+  max-width: 90%;
+  width: 100%;
+  padding-inline: 0px;
+  justify-content: center;
+}
+}
 </style>
 <noscript><style>#loader{display:none!important}</style></noscript>
 <style>
@@ -427,6 +452,118 @@ main {
   margin-left: 6px;
 }
 </style>
+<style>
+/* ===== 5. Unified action buttons: Run / Stop / Copy / Clear ===== */
+:root{--act-h:34px;
+ --run-bg:#15803d;--run-fg:#fff;
+ --stop-bg:#b91c1c;--stop-fg:#fff;
+ --cp-bg:#e0f2f4;--cp-fg:#0b5c68;--cp-bd:#8fd0d8;
+ --cl-bg:#fde8e8;--cl-fg:#a61b1b;--cl-bd:#f0b3b3}
+:root[data-theme="dark"]{
+ --run-bg:#4ade80;--run-fg:#052e16;
+ --stop-bg:#f87171;--stop-fg:#2b0a0a;
+ --cp-bg:#12353b;--cp-fg:#7fe3ef;--cp-bd:#1f5a63;
+ --cl-bg:#3a1a1d;--cl-fg:#ffa8a8;--cl-bd:#6b2a2f}
+:root button.act{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:var(--act-h);min-height:var(--act-h);margin:0;padding:0 14px;
+ border:1px solid var(--act-bd,var(--act-bg));border-radius:6px;background:var(--act-bg);color:var(--act-fg);
+ font:600 12.5px/1 var(--font-default);letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;
+ box-shadow:none;transform:none;cursor:pointer;transition:background-color .15s,border-color .15s,color .15s}
+:root button.act svg{width:15px;height:15px;flex:none;display:block;pointer-events:none}
+:root button.act:hover:not(:disabled){background:color-mix(in srgb,var(--act-bg) 86%,var(--tx));border-color:var(--act-bd,color-mix(in srgb,var(--act-bg) 86%,var(--tx)));color:var(--act-fg);transform:none;box-shadow:none}
+:root button.act:active:not(:disabled){background:color-mix(in srgb,var(--act-bg) 76%,var(--tx))}
+:root button.act:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;transform:none}
+:root button.act:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+:root button.act.stop{display:none}
+.act-run{--act-bg:var(--run-bg);--act-fg:var(--run-fg)}
+.act-stop{--act-bg:var(--stop-bg);--act-fg:var(--stop-fg)}
+.act-cp{--act-bg:var(--cp-bg);--act-fg:var(--cp-fg);--act-bd:var(--cp-bd)}
+.act-cl{--act-bg:var(--cl-bg);--act-fg:var(--cl-fg);--act-bd:var(--cl-bd)}
+@media(prefers-reduced-motion:reduce){:root button.act{transition:none}}
+
+/* ===== 3 + 4. File tabs: add button, rename field, drag feedback ===== */
+.nav-tabs .nav-link{position:relative;cursor:pointer;user-select:none;-webkit-user-select:none;outline:0;transition:background-color .12s,color .12s,opacity .12s}
+.nav-link .tn{cursor:pointer;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.nav-tabs .nav-link:not(.active):hover{background:rgba(128,128,128,.12)}
+.nav-tabs .nav-link:focus-visible{box-shadow:inset 0 0 0 2px var(--ac)}
+.nav-tabs .nav-link.dragging{opacity:.45}
+.nav-tabs .nav-link.drop-before::before,.nav-tabs .nav-link.drop-after::after{content:"";position:absolute;top:4px;bottom:0;width:3px;border-radius:2px;background:var(--ac)}
+.nav-tabs .nav-link.drop-before::before{left:-3px}
+.nav-tabs .nav-link.drop-after::after{right:-3px}
+body.tab-dragging,body.tab-dragging *{cursor:grabbing!important;user-select:none!important}
+.tn-in{font:inherit;line-height:1.2;color:var(--tx);background:var(--bg);border:1px solid var(--ac);border-radius:4px;margin:-3px 0;padding:2px 6px;min-width:8ch;max-width:260px;outline:0;user-select:text;-webkit-user-select:text;cursor:text}
+.tn-in.bad{border-color:var(--er)}
+:root .nav-tabs button.tab-add{flex:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;min-height:0;margin:7px 0 0 2px;padding:0;
+ border:1px solid transparent;border-radius:6px;background:transparent;color:var(--mu);box-shadow:none;transform:none;cursor:pointer;transition:background-color .12s,color .12s,border-color .12s}
+:root .nav-tabs button.tab-add svg{width:15px;height:15px;display:block;pointer-events:none}
+:root .nav-tabs button.tab-add:hover{background:var(--bg);border-color:var(--bd);color:var(--ac);transform:none;box-shadow:none}
+:root .nav-tabs button.tab-add:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+@media(max-width:524px){:root .nav-tabs button.tab-add{margin-top:0}}
+
+/* ===== 1. Find & Replace ===== */
+#fm{position:absolute;left:0;top:0;pointer-events:none;color:transparent;overflow:visible}
+#fm mark{background:rgba(255,193,7,.30);color:transparent;border-radius:2px;box-shadow:0 0 0 1px rgba(255,193,7,.5)}
+#fm mark.cur{background:rgba(255,152,0,.58);box-shadow:0 0 0 1px #ff9800}
+#mir{position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none}
+#fr{position:absolute;top:8px;right:18px;z-index:6;display:none;flex-direction:column;gap:6px;width:min(440px,calc(100% - 36px));padding:8px;background:var(--pn);border:1px solid var(--bd);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+#fr.open{display:flex}
+#fr .fr-row{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+#fr .fr-in{flex:1 1 150px;min-width:0;height:28px;padding:0 8px;font:500 13px var(--font-code);color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:5px;outline:0}
+#fr .fr-in:focus{border-color:var(--ac)}
+#fr .fr-cnt{min-width:62px;padding:0 4px;text-align:center;font:500 12px var(--font-default);color:var(--mu);white-space:nowrap;cursor:default}
+#fr .fr-cnt.none{color:var(--er)}
+:root #fr button.fb{display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:28px;height:28px;min-height:0;margin:0;padding:0 6px;
+ font:600 12px/1 var(--font-default);color:var(--tx);background:transparent;border:1px solid transparent;border-radius:5px;box-shadow:none;transform:none;cursor:pointer;transition:background-color .12s,border-color .12s}
+:root #fr button.fb svg{width:15px;height:15px;display:block;pointer-events:none}
+:root #fr button.fb:hover:not(:disabled){background:var(--hd);border-color:var(--bd);color:var(--tx);transform:none;box-shadow:none}
+:root #fr button.fb[aria-pressed="true"]{background:color-mix(in srgb,var(--ac) 24%,transparent);border-color:var(--ac)}
+:root #fr button.fb.fw{padding:0 10px;border-color:var(--bd);background:var(--hd)}
+:root #fr button.fb:disabled{opacity:.4;cursor:not-allowed}
+:root #fr button.fb:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+#fr u{text-underline-offset:3px}
+@media(max-width:524px){#fr{right:8px;width:calc(100% - 16px)}}
+
+/* ===== 2. IntelliSense ===== */
+#ac,#sg{position:absolute;z-index:7;display:none;background:var(--pn);border:1px solid var(--bd);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.32);font:500 13px/1.4 var(--font-code);color:var(--tx)}
+#ac{flex-direction:column;min-width:240px;max-width:min(460px,calc(100% - 12px));overflow:hidden}
+#ac.open{display:flex}
+#ac-list{position:relative;max-height:216px;overflow-y:auto;margin:0;padding:4px;list-style:none}
+.ac-i{display:flex;align-items:center;gap:8px;height:27px;padding:0 8px;border-radius:5px;cursor:pointer;white-space:nowrap}
+.ac-i.sel{background:color-mix(in srgb,var(--ac) 26%,transparent)}
+.ac-k{flex:none;display:grid;place-items:center;width:18px;height:18px;border-radius:4px;background:var(--hd);font:700 10px/1 var(--font-default)}
+.ac-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ac-n b{color:var(--ac);font-weight:700}
+.ac-t{flex:none;max-width:40%;overflow:hidden;text-overflow:ellipsis;color:var(--mu);font-size:12px}
+#ac-doc{display:none;max-height:130px;overflow:auto;padding:8px 10px;border-top:1px solid var(--bd);background:var(--hd);font:500 12px/1.5 var(--font-code);white-space:pre-wrap;word-break:break-word}
+#ac-doc.has{display:block}
+#ac-doc .d,#sg .d{margin-top:4px;color:var(--mu);font-family:var(--font-default);white-space:normal}
+#sg{max-width:min(560px,calc(100% - 12px));padding:6px 10px;font-size:12.5px;color:var(--mu);white-space:pre-wrap;word-break:break-word;pointer-events:none}
+#sg.open{display:block}
+#sg b{color:var(--tx);text-decoration:underline;text-underline-offset:2px}
+
+/* ===== Ghost semicolon (Tab inserts it) ===== */
+#gs{position:absolute;display:none;pointer-events:none;user-select:none;white-space:pre;font-family:var(--font-code)!important;font-weight:500;line-height:1.8em;letter-spacing:.3px;color:var(--tx);opacity:.32}
+#gs.on{display:block}
+
+/* ===== Template placeholders: ${ variable } =====
+   Colour only (no weight/size change) so the overlay stays aligned with the textarea. */
+:root{--tvc:#c2410c}
+:root[data-theme="dark"]{--tvc:#ffa06b}
+.td{color:var(--ac)}
+.tv{color:var(--tvc);text-decoration:underline dotted;text-decoration-thickness:1px;text-underline-offset:4px}
+#tp{position:absolute;z-index:8;display:none;max-width:min(380px,calc(100% - 12px));padding:9px 11px;background:var(--pn);border:1px solid var(--bd);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.32);font:500 12.5px/1.5 var(--font-default);color:var(--tx);pointer-events:none}
+#tp.open{display:block}
+#tp .th{font-family:var(--font-code);font-size:13px;color:var(--tvc);margin-bottom:4px;word-break:break-all}
+#tp .th i{font-style:normal;color:var(--ac)}
+#tp p{margin:0 0 4px;color:var(--tx)}
+#tp p:last-child{margin-bottom:0}
+#tp .mu{color:var(--mu)}
+#tp code{font-family:var(--font-code);font-size:12px;padding:0 4px;border-radius:4px;background:var(--hd)}
+@media(min-width: 992px) {
+header {
+  margin-bottom: 2rem;
+}
+}
+</style>
 </head>
 <body>
 <div id="loader" role="status" aria-live="polite" aria-label="Loading JS/TS Online Compiler">
@@ -492,16 +629,16 @@ main {
 <div class="seg" id="lang"><button data-l="js" class="on">JavaScript</button><button data-l="ts">TypeScript</button></div>
 <div class="seg fsz" role="group" aria-label="Editor font size"><button type="button" class="ibtn" id="fdn" title="Decrease font size" aria-label="Decrease font size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 19 8 8.5l4.5 10.5M5.2 15.5h5.6"/><path d="M16.5 8h5"/></svg></button><button type="button" class="ibtn" id="fup" title="Increase font size" aria-label="Increase font size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 19 8.5 5l6 14M4.8 14.5h7.4"/><path d="M16.5 8h5M19 5.5v5"/></svg></button></div>
 <button id="ex" title="Load an example">Examples</button><button id="up" title="Open .js / .ts files">Open</button><button id="dl" title="Save the current file (Ctrl+S)">Save</button><button type="button" class="ibtn" id="th" title="Switch to light mode" aria-label="Switch to light mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="i-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></g><path class="i-moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
-<button class="run" id="run" title="Run (Ctrl+Enter)">▶ Run</button><button class="stop" id="stop" title="Stop execution">■ Stop</button>
+<button class="run act act-run" id="run" title="Run (Ctrl+Enter)"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.6v14.8a.9.9 0 0 0 1.4.75l11.1-7.4a.9.9 0 0 0 0-1.5L8.4 3.85A.9.9 0 0 0 7 4.6z"/></svg><span>Run</span></button><button class="stop act act-stop" id="stop" title="Stop execution"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.6"/></svg><span>Stop</span></button>
 <input type="file" id="file" accept=".js,.ts,.mjs" multiple hidden>
 </div>
 </header>
 <main id="app-container">
-<section class="pane p-ed"><div class="bar tabbar"><div class="nav nav-tabs" id="tabs" role="tablist"></div><div class="tools"><button class="mini" id="ecp" title="Copy the code to the clipboard">Copy</button><button class="mini" id="eclr" title="Clear the editor (Ctrl+Z restores it)">Clear</button></div><span id="pos" title="Cursor position">Ln 1, Col 1</span></div>
-<div class="ed"><div id="ln"><div id="lni">1</div></div><div class="wrap" id="wrap"><div id="sc"><div id="cl"></div><pre id="hl"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Code editor" placeholder="// Write your code here, or pick one from Examples…"></textarea></div></div></div></section>
+<section class="pane p-ed"><div class="bar tabbar"><div class="nav nav-tabs" id="tabs" role="tablist"></div><div class="tools"><button class="mini act act-cp" id="ecp" title="Copy the code to the clipboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy</span></button><button class="mini act act-cl" id="eclr" title="Clear the editor (Ctrl+Z restores it)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5"/></svg><span>Clear</span></button></div><span id="pos" title="Cursor position">Ln 1, Col 1</span></div>
+<div class="ed"><div id="ln"><div id="lni">1</div></div><div class="wrap" id="wrap"><div id="sc"><div id="cl"></div><pre id="fm" aria-hidden="true"></pre><pre id="hl"></pre><pre id="mir" aria-hidden="true"></pre><span id="gs" aria-hidden="true">;</span><textarea class="editor" id="code" aria-autocomplete="list" aria-controls="ac-list" aria-expanded="false" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Code editor" placeholder="// Write your code here, or pick one from Examples…"></textarea></div></div><div id="fr" role="search" aria-label="Find and replace"><div class="fr-row"><input id="fq" class="fr-in" type="text" placeholder="Find" aria-label="Find" spellcheck="false" autocomplete="off" autocapitalize="off"><button type="button" class="fb" id="fcs" aria-pressed="false" title="Match case" aria-label="Match case">Aa</button><button type="button" class="fb" id="fww" aria-pressed="false" title="Match whole word" aria-label="Match whole word"><u>ab</u></button><span class="fr-cnt" id="fcnt" aria-live="polite"></span><button type="button" class="fb" id="fpv" title="Previous match (Shift+Enter)" aria-label="Previous match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button><button type="button" class="fb" id="fnx" title="Next match (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><button type="button" class="fb" id="fcl" title="Close (Esc)" aria-label="Close find and replace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="fr-row"><input id="fri" class="fr-in" type="text" placeholder="Replace" aria-label="Replace with" spellcheck="false" autocomplete="off" autocapitalize="off"><button type="button" class="fb fw" id="frb" title="Replace this match (Enter)">Replace</button><button type="button" class="fb fw" id="fra" title="Replace all matches (Ctrl+Alt+Enter)">Replace All</button></div></div><div id="ac"><ul id="ac-list" role="listbox" aria-label="Suggestions"></ul><div id="ac-doc"></div></div><div id="sg" role="status"></div><div id="tp" role="tooltip"></div></div></section>
 <div class="split" id="split" role="separator" aria-orientation="vertical" aria-label="Resize panels" tabindex="0" title="Drag to resize (double-click to reset)"></div>
 <div class="right">
-<section class="pane p-out"><div class="bar"><span>Output</span><span id="stat"></span><button class="mini" id="ocp" title="Copy the output to the clipboard">Copy</button><button class="mini" id="clr" style="padding:2px 8px" title="Clear the output">Clear</button></div><pre id="out"></pre></section>
+<section class="pane p-out"><div class="bar"><span>Output</span><span id="stat"></span><button class="mini act act-cp" id="ocp" title="Copy the output to the clipboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy</span></button><button class="mini act act-cl" id="clr" title="Clear the output"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5"/></svg><span>Clear</span></button></div><pre id="out"></pre></section>
 </div>
 </main>
 <footer class="compiler-footer">
@@ -519,7 +656,7 @@ main {
       <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" class="footer-link">Documentation</a>
       <span class="separator">/</span>
       <a href="https://github.com/Hamzaqid7" target="_blank" class="footer-link">GitHub</a>
-      <span class="version">v1.0.5</span>
+      <span class="version">v1.0.2</span>
     </div>
   </div>
 </footer>
@@ -544,8 +681,8 @@ main {
       // and a soft spotlight that gently reveals the grid under the pointer.
       const CONFIG = {
         gridSize: 48,
-        pulseMin: 8,
-        pulseMax: 16,
+        pulseMin: 16,
+        pulseMax: 24,
         pulseAreaPerBeam: 130000,
         pulseLength: 140,
         pulseSpeed: 46,
@@ -918,21 +1055,20 @@ const cur=()=>tabs.find(t=>t.id===active);
 const code=$("code"),out=$("out"),wrap=$("wrap");
 function save(){const t=cur();if(!t)return;if(t.id==="main"){try{localStorage.setItem("c_"+lang,code.value)}catch(e){}}else t.content=code.value}
 function load(l){let v=null;try{v=localStorage.getItem("c_"+l)}catch(e){}return v??Object.values(SAMPLES[l])[0]}
-function lines(){const n=code.value.split("\n").length;$("lni").textContent=Array.from({length:n},(_, i)=>i+1).join("\n");gut();hl()}
+function lines(){const n=code.value.split("\n").length;$("lni").textContent=Array.from({length:n},(_, i)=>i+1).join("\n");gut();hl();frUpdate()}
 function gut(){$("lni").style.transform="translateY("+(-wrap.scrollTop)+"px)"}
-function hl(){const e=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");const re=/(\/\/.*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|\b(\d[\d_.]*n?)\b|\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|from|default|async|await|try|catch|finally|throw|typeof|instanceof|in|of|this|super|null|undefined|true|false|void|delete|interface|type|enum|implements|public|private|protected|readonly|static|as|keyof|namespace|declare|abstract)\b|\b(string|number|boolean|any|unknown|never|object|symbol|bigint|Array|Promise|Map|Set|Record|console)\b|([A-Za-z_$][\w$]*)(?=\s*\()|(===|!==|==|!=|<=|>=|=>|\+\+|--|&&|\|\||\?\?|[+\-*\/%=<>!&|^~?])|([{}\[\]();:])|([,.])|([A-Za-z_$][\w$]*)/g;let o="",i=0,t=code.value,m;while((m=re.exec(t))){o+=e(t.slice(i,m.index));const c=m[1]?"cm":m[2]?"st":m[3]?"nm":m[4]?"kw":m[5]?"ty":m[6]?"fn":m[7]?"op":m[8]?"bk":m[9]?"pn":"id";o+='<span class="'+c+'">'+e(m[0])+'</span>';i=re.lastIndex}o+=e(t.slice(i));const h=$("hl");h.innerHTML=o+"\n"}
+function hl(){const e=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");const re=/(\/\/.*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|\b(\d[\d_.]*n?)\b|\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|from|default|async|await|try|catch|finally|throw|typeof|instanceof|in|of|this|super|null|undefined|true|false|void|delete|interface|type|enum|implements|public|private|protected|readonly|static|as|keyof|namespace|declare|abstract)\b|\b(string|number|boolean|any|unknown|never|object|symbol|bigint|Array|Promise|Map|Set|Record|console)\b|([A-Za-z_$][\w$]*)(?=\s*\()|(===|!==|==|!=|<=|>=|=>|\+\+|--|&&|\|\||\?\?|[+\-*\/%=<>!&|^~?])|([{}\[\]();:])|([,.])|([A-Za-z_$][\w$]*)/g;let o="",i=0,t=code.value,m;while((m=re.exec(t))){o+=e(t.slice(i,m.index));const c=m[1]?"cm":m[2]?"st":m[3]?"nm":m[4]?"kw":m[5]?"ty":m[6]?"fn":m[7]?"op":m[8]?"bk":m[9]?"pn":"id";o+=(c==="st"&&m[0][0]==="`")?tpl(m[0],m.index,e):'<span class="'+c+'">'+e(m[0])+'</span>';i=re.lastIndex}o+=e(t.slice(i));const h=$("hl");h.innerHTML=o+"\n"}
 function pos(){const s=code.selectionStart,e=code.selectionEnd,p=code.value.slice(0,s).split("\n"),c=$("cl");$("pos").textContent=`Ln ${p.length}, Col ${p[p.length-1].length+1}`+(e>s?` (${e-s} selected)`:"");c.style.setProperty("--cl",p.length-1);c.classList.toggle("on",e===s)}
 function syncSeg(){document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang));if(lang==="ts")loadTS().catch(()=>{})}
 function saveActive(){const t=cur();if(!t)return;save();t.s=code.selectionStart;t.e=code.selectionEnd;t.sc=wrap.scrollTop}
-function renderTabs(){const n=$("tabs");n.textContent="";tabs.forEach(t=>{const b=document.createElement("button");b.type="button";b.className="nav-link"+(t.id===active?" active":"");b.setAttribute("role","tab");b.setAttribute("aria-selected",t.id===active);b.title=t.name;b.appendChild(document.createTextNode(t.name));if(t.id!=="main"){const x=document.createElement("i");x.className="x";x.textContent="×";x.title="Close";x.onclick=e=>{e.stopPropagation();closeTab(t.id)};b.appendChild(x)}b.onclick=()=>activate(t.id);n.appendChild(b)})}
-function activate(id){const t=tabs.find(x=>x.id===id);if(!t)return;saveActive();active=id;lang=t.lang;syncSeg();code.value=id==="main"?load(lang):t.content;renderTabs();lines();pos();code.setSelectionRange(t.s||0,t.e||0);wrap.scrollTop=t.sc||0;wrap.scrollLeft=0;hl();gut()}
-function closeTab(id){const i=tabs.findIndex(t=>t.id===id);if(i<1)return;const was=active===id;tabs.splice(i,1);if(was){active="";activate(tabs[i-1].id)}else renderTabs()}
-function setLang(l){saveActive();active="main";tabs[0].lang=l;tabs[0].name="main."+l;lang=l;syncSeg();code.value=load(l);renderTabs();lines();pos()}
+function activate(id){const t=tabs.find(x=>x.id===id);if(!t||id===active)return;ren=null;acClose();sgClose();saveActive();active=id;lang=t.lang;syncSeg();code.value=id==="main"?load(lang):t.content;FR.from=t.s||0;renderTabs();revealTab();lines();pos();code.setSelectionRange(t.s||0,t.e||0);wrap.scrollTop=t.sc||0;wrap.scrollLeft=0;hl();gut()}
+function closeTab(id){const i=tabs.findIndex(t=>t.id===id);if(i<0||id==="main")return;const was=active===id;if(ren===id)ren=null;tabs.splice(i,1);if(was){active="";activate((tabs[i-1]||tabs[i]).id)}else renderTabs()}
+function setLang(l){saveActive();const m=tabs.find(t=>t.id==="main");ren=null;acClose();sgClose();active="main";m.lang=l;m.name=/^main\.(js|ts)$/.test(m.name)?"main."+l:retype(m.name,l);lang=l;syncSeg();code.value=load(l);renderTabs();revealTab();lines();pos()}
 document.querySelectorAll("#lang button").forEach(b=>{b.onclick=()=>setLang(b.dataset.l);if(b.dataset.l==="ts"){const w=()=>loadTS().catch(()=>{});b.addEventListener("pointerenter",w,{once:true});b.addEventListener("focus",w,{once:true})}});
-code.addEventListener("input",()=>{lines();pos();save()});
+code.addEventListener("input",e=>{lines();pos();save();acInput(e);gsHide();tpHide();gsSoon()});
 wrap.addEventListener("scroll",gut);
 code.addEventListener("scroll",()=>{code.scrollTop=0;code.scrollLeft=0});
-document.addEventListener("selectionchange",()=>{if(document.activeElement===code)pos()});
+document.addEventListener("selectionchange",()=>{if(document.activeElement===code){pos();acSync();gsHide();gsSoon();tpCaret()}});
 ["keyup","click"].forEach(e=>code.addEventListener(e,pos));
 /* Re-writes the whole lines touched by the selection using execCommand so native undo keeps working */
 function editLines(fn){
@@ -946,6 +1082,10 @@ function toggleComment(){editLines(L=>{const ne=L.filter(l=>l.trim());if(!ne.len
  return L.map(l=>!l.trim()?l:un?l.replace(/^(\s*)\/\/ ?/,"$1"):l.slice(0,ind)+"// "+l.slice(ind))})}
 code.addEventListener("keydown",e=>{
  const mod=e.ctrlKey||e.metaKey;
+ if(acKey(e)){e.preventDefault();return}
+ if(e.key==="Tab"&&GS.on&&!e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.metaKey){e.preventDefault();gsAccept();return}
+ if(e.key==="Escape"&&(SG.open||FR.open)){e.preventDefault();SG.open?sgClose():frClose();return}
+ if(mod&&!e.shiftKey&&!e.altKey&&e.key===" "){e.preventDefault();acRequest(true);return}
  if(e.key==="Tab"){e.preventDefault();
   if(e.shiftKey)editLines(L=>L.map(l=>l.replace(/^( {1,2}|\t)/,"")));
   else if(code.value.slice(code.selectionStart,code.selectionEnd).includes("\n"))editLines(L=>L.map(l=>l?"  "+l:l));
@@ -991,6 +1131,7 @@ async function run(){
  if($("run").disabled)return;setRan(true);
  if(kill){kill();kill=null}
  out.textContent="";
+ await semiFix();
  if(lang==="ts"&&!window.ts){
   if(tsLoading)return;tsLoading=true;
   log("Loading TypeScript compiler…","");
@@ -1019,7 +1160,397 @@ $("run").onclick=run;$("stop").onclick=()=>finish("— Execution stopped —");
 $("ex").onclick=()=>{const k=Object.keys(SAMPLES[lang]);const n=prompt("Load example:\n"+k.map((x,i)=>(i+1)+". "+x).join("\n")+"\n\nEnter number:");const s=k[(+n||0)-1];if(s){code.value=SAMPLES[lang][s];lines();pos();save()}};
 $("dl").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([code.value],{type:"text/plain"}));a.download=cur().name;a.click()};
 $("up").onclick=()=>$("file").click();
-$("file").onchange=async e=>{const fs=[...e.target.files];e.target.value="";let last=null;for(const f of fs){let t=tabs.find(x=>x.id!=="main"&&x.name===f.name);if(!t){t={id:"t"+(++tid),name:f.name,lang:/\.ts$/i.test(f.name)?"ts":"js",content:await f.text()};tabs.push(t)}last=t}if(last)activate(last.id)};
+$("file").onchange=async e=>{const fs=[...e.target.files];e.target.value="";let last=null;for(const f of fs){let t=tabs.find(x=>x.id!=="main"&&x.name===f.name);if(!t){const nm=tabs.some(x=>x.name.toLowerCase()===f.name.toLowerCase())?uniqueName(f.name.replace(/\.[^.]+$/,""),extOf(f.name)||"js"):f.name;t={id:"t"+(++tid),name:nm,lang:/\.ts$/i.test(f.name)?"ts":"js",content:await f.text()};tabs.push(t)}last=t}if(last)activate(last.id)};
+/* ===================== Shared editing helper =====================
+   Replaces a range through execCommand so the browser's native undo keeps working. */
+function edit(s,e,txt){
+ const pf=document.activeElement,st=wrap.scrollTop,sl=wrap.scrollLeft,v=code.value,want=v.slice(0,s)+txt+v.slice(e);
+ code.focus({preventScroll:true});code.setSelectionRange(s,e);
+ let ok=false;try{ok=txt===""?(s===e||document.execCommand("delete")):document.execCommand("insertText",false,txt)}catch(x){}
+ if(!ok||code.value!==want){code.value=want;code.dispatchEvent(new Event("input",{bubbles:true}))}
+ if(pf&&pf!==code&&pf.focus)pf.focus({preventScroll:true});
+ wrap.scrollTop=st;wrap.scrollLeft=sl}
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+/* ===================== 3 + 4. Files: add, rename, reorder ===================== */
+const MAX_TABS=20,EXT={js:["js","mjs"],ts:["ts"]};
+const extOf=n=>{const m=/\.([^.]+)$/.exec(n);return m?m[1].toLowerCase():""};
+/* untitled.js, untitled-2.js, ... (skip = a tab id that is being renamed, so it doesn't clash with itself) */
+function uniqueName(b,x,skip){const u=new Set(tabs.filter(t=>t.id!==skip).map(t=>t.name.toLowerCase()));let n=b+"."+x,i=1;while(u.has(n.toLowerCase()))n=b+"-"+(++i)+"."+x;return n}
+const retype=(n,l)=>{const s=n.replace(/\.[^.]+$/,"")||"main",c=s+"."+l;return tabs.some(t=>t.id!=="main"&&t.name.toLowerCase()===c.toLowerCase())?uniqueName(s,l,"main"):c};
+let ren=null,lastDrag=0;
+const ICON_ADD='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+function tabLabel(t){const s=document.createElement("span");s.className="tn";s.textContent=t.name;return s}
+function renderTabs(){const n=$("tabs"),sl=n.scrollLeft;n.textContent="";
+ tabs.forEach(t=>{const on=t.id===active,b=document.createElement("div");b.className="nav-link"+(on?" active":"");b.dataset.id=t.id;b.setAttribute("role","tab");b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;
+  if(ren===t.id){const i=document.createElement("input");i.className="tn-in";i.value=t.name;i.maxLength=64;i.spellcheck=false;i.autocomplete="off";i.setAttribute("aria-label","File name");i.style.width=Math.max(8,t.name.length+2)+"ch";
+   i.oninput=()=>{i.classList.remove("bad");i.title="";i.style.width=Math.max(8,i.value.length+2)+"ch"};
+   i.onkeydown=e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();endRename(true)}else if(e.key==="Escape"){e.preventDefault();endRename(false)}};
+   i.onblur=()=>endRename(true,true);b.appendChild(i)}
+  else{b.title=t.name+" (double-click to rename)";b.appendChild(tabLabel(t))}
+  if(t.id!=="main"){const x=document.createElement("i");x.className="x";x.textContent="×";x.title="Close";x.setAttribute("aria-label","Close "+t.name);b.appendChild(x)}
+  n.appendChild(b);
+  if(on){const a=document.createElement("button");a.type="button";a.className="tab-add";a.title="New file";a.setAttribute("aria-label","New file");a.innerHTML=ICON_ADD;n.appendChild(a)}});
+ n.scrollLeft=sl}
+function revealTab(){const n=$("tabs"),a=n.querySelector(".nav-link.active");if(!a)return;const r=a.getBoundingClientRect(),c=n.getBoundingClientRect();
+ if(r.left<c.left)n.scrollLeft-=c.left-r.left+8;else if(r.right>c.right-40)n.scrollLeft+=r.right-c.right+48}
+function focusTab(id){const q=$("tabs").querySelector('[data-id="'+id+'"]');if(q)q.focus()}
+function newFile(){
+ if(tabs.length>=MAX_TABS){toast("You can have up to "+MAX_TABS+" files open");return}
+ const t={id:"t"+(++tid),name:uniqueName("untitled",lang),lang:lang,content:""};
+ tabs.splice(tabs.findIndex(x=>x.id===active)+1,0,t);activate(t.id);code.focus()}
+/* Returns {name} (extension fixed up) or {err} */
+function checkName(t,raw){
+ let n=raw.trim();
+ if(!n)return{err:"File name can't be empty"};
+ if(/[\\\/:*?"<>|\u0000-\u001f]/.test(n))return{err:'File names can\u2019t contain \\ / : * ? " < > |'};
+ if(n.startsWith("."))return{err:"File names can\u2019t start with a dot"};
+ const e=extOf(n),ok=EXT[t.lang];
+ if(ok.includes(e)){}
+ else if(/^(js|mjs|ts)$/.test(e))return{err:"A "+(t.lang==="ts"?"TypeScript":"JavaScript")+" file must end in ."+ok[0]};
+ else n+="."+ok[0];
+ if(tabs.some(x=>x.id!==t.id&&x.name.toLowerCase()===n.toLowerCase()))return{err:"A file named \u201c"+n+"\u201d already exists"};
+ return{name:n}}
+function startRename(id){const t=tabs.find(x=>x.id===id);if(!t||ren!==null)return;if(id!==active)activate(id);ren=id;renderTabs();const i=$("tabs").querySelector(".tn-in");if(i){i.focus();i.select()}}
+/* Updates the label in place (no full re-render) so a click on another tab that caused the blur still lands */
+function endRename(ok,blur){
+ if(ren===null)return;const t=tabs.find(x=>x.id===ren),i=$("tabs").querySelector(".tn-in");
+ if(ok&&t&&i){const r=checkName(t,i.value);
+  if(r.err){toast(r.err);if(!blur){i.classList.add("bad");i.title=r.err;i.focus();return}}
+  else t.name=r.name}
+ ren=null;
+ if(t&&i&&i.parentNode){const b=i.parentNode;b.replaceChild(tabLabel(t),i);b.title=t.name+" (double-click to rename)";const x=b.querySelector(".x");if(x)x.setAttribute("aria-label","Close "+t.name)}
+ if(!blur)code.focus({preventScroll:true})}
+
+/* Drag & drop reordering: pointer events, so it works with mouse, pen and touch (touch = long-press) */
+const DR={id:null,go:false};
+function dragDown(e){
+ if(e.button!==0||ren!==null||DR.id)return;const el=e.target.closest(".nav-link");if(!el||e.target.closest(".x,.tn-in"))return;
+ Object.assign(DR,{id:el.dataset.id,el:el,x:e.clientX,y:e.clientY,pid:e.pointerId,touch:e.pointerType==="touch",go:false,to:-1});
+ if(DR.touch)DR.t=setTimeout(dragStart,350);
+ document.addEventListener("pointermove",dragMove);document.addEventListener("pointerup",dragUp);document.addEventListener("pointercancel",dragStop);document.addEventListener("keydown",dragKey)}
+function dragStart(){if(!DR.id||DR.go)return;DR.go=true;DR.el.classList.add("dragging");document.body.classList.add("tab-dragging");try{DR.el.setPointerCapture(DR.pid)}catch(x){}}
+function dragMove(e){
+ if(e.pointerId!==DR.pid)return;
+ if(!DR.go){const d=Math.hypot(e.clientX-DR.x,e.clientY-DR.y);if(DR.touch){if(d>8)dragStop()}else if(d>5)dragStart();if(!DR.go)return}
+ const nb=$("tabs"),r=nb.getBoundingClientRect();
+ if(e.clientX<r.left+28)nb.scrollLeft-=14;else if(e.clientX>r.right-28)nb.scrollLeft+=14;
+ const els=[...nb.querySelectorAll(".nav-link")].filter(x=>x!==DR.el);let to=0;
+ els.forEach((x,i)=>{const b=x.getBoundingClientRect();if(e.clientX>b.left+b.width/2)to=i+1});
+ DR.to=to;nb.querySelectorAll(".drop-before,.drop-after").forEach(x=>x.classList.remove("drop-before","drop-after"));
+ if(els.length&&to!==tabs.findIndex(t=>t.id===DR.id))(to<els.length?els[to]:els[els.length-1]).classList.add(to<els.length?"drop-before":"drop-after")}
+function dragStop(){
+ clearTimeout(DR.t);document.removeEventListener("pointermove",dragMove);document.removeEventListener("pointerup",dragUp);document.removeEventListener("pointercancel",dragStop);document.removeEventListener("keydown",dragKey);
+ document.body.classList.remove("tab-dragging");$("tabs").querySelectorAll(".dragging,.drop-before,.drop-after").forEach(x=>x.classList.remove("dragging","drop-before","drop-after"));
+ try{if(DR.el)DR.el.releasePointerCapture(DR.pid)}catch(x){}
+ DR.id=null;DR.go=false;DR.el=null}
+function dragUp(e){
+ if(e.pointerId!==DR.pid)return;const id=DR.id,to=DR.to,was=DR.go;dragStop();if(!was)return;lastDrag=Date.now();
+ const i=tabs.findIndex(t=>t.id===id);if(i>=0&&to>=0&&to!==i){const m=tabs.splice(i,1)[0];tabs.splice(to,0,m);renderTabs();focusTab(id)}}
+function dragKey(e){if(e.key==="Escape"&&DR.go){e.preventDefault();dragStop()}}
+{const tb=$("tabs");
+ tb.addEventListener("click",e=>{
+  if(Date.now()-lastDrag<300)return;
+  if(e.target.closest(".tab-add")){newFile();return}
+  const el=e.target.closest(".nav-link");if(!el||e.target.closest(".tn-in"))return;
+  if(e.target.closest(".x"))closeTab(el.dataset.id);else activate(el.dataset.id)});
+ tb.addEventListener("dblclick",e=>{const el=e.target.closest(".nav-link");if(el&&!e.target.closest(".x,.tn-in"))startRename(el.dataset.id)});
+ tb.addEventListener("keydown",e=>{
+  const el=e.target.closest(".nav-link");if(!el||e.target.tagName==="INPUT")return;const id=el.dataset.id,i=tabs.findIndex(t=>t.id===id);
+  const go=k=>{const t=tabs[k];if(t){activate(t.id);focusTab(t.id)}};
+  if(e.key==="Enter"||e.key===" "){e.preventDefault();activate(id);focusTab(id)}
+  else if(e.key==="F2"){e.preventDefault();startRename(id)}
+  else if(e.key==="ArrowRight"){e.preventDefault();go(i+1)}
+  else if(e.key==="ArrowLeft"){e.preventDefault();go(i-1)}
+  else if(e.key==="Delete"&&id!=="main"){e.preventDefault();closeTab(id);focusTab(active)}});
+ tb.addEventListener("pointerdown",dragDown);
+ tb.addEventListener("touchmove",e=>{if(DR.go)e.preventDefault()},{passive:false})}
+
+/* ===================== 1. Find & Replace ===================== */
+const FR={open:false,q:"",cs:false,ww:false,m:[],cur:-1,from:0},MAXM=5000;
+const fpn=$("fr"),fq=$("fq"),fri=$("fri"),fm=$("fm"),fcnt=$("fcnt");
+function frRe(){
+ if(!FR.q)return null;const s=FR.q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),f=FR.cs?"g":"gi";
+ try{return new RegExp(FR.ww?"(?<![\\w$])"+s+"(?![\\w$])":s,f)}catch(x){return new RegExp(FR.ww?"\\b"+s+"\\b":s,f)}}
+function frScan(){FR.m=[];const re=frRe();if(!re)return;const v=code.value;let m;while(FR.m.length<MAXM&&(m=re.exec(v))){FR.m.push([m.index,m.index+m[0].length]);if(!m[0].length)re.lastIndex++}}
+const frPick=p=>{if(!FR.m.length)return -1;const i=FR.m.findIndex(x=>x[0]>=p);return i<0?0:i};
+function frCount(){const n=FR.m.length;fcnt.textContent=!FR.q?"":n?(FR.cur+1)+" of "+(n>=MAXM?MAXM+"+":n):"No results";fcnt.classList.toggle("none",!!FR.q&&!n)}
+/* Matches are drawn on their own layer (#fm) underneath the syntax-highlighted text */
+function frRender(){
+ if(!FR.open||!FR.q){fm.textContent="";fcnt.textContent="";fcnt.classList.remove("none")}
+ else{const v=code.value;let o="",i=0;FR.m.forEach((x,k)=>{o+=esc(v.slice(i,x[0]))+"<mark"+(k===FR.cur?' class="cur"':"")+">"+esc(v.slice(x[0],x[1]))+"</mark>";i=x[1]});fm.innerHTML=o+esc(v.slice(i))+"\n";frCount()}
+ ["fpv","fnx","frb","fra"].forEach(id=>{$(id).disabled=!FR.m.length})}
+function frUpdate(){if(!FR.open)return;frScan();FR.cur=frPick(document.activeElement===code?code.selectionStart:FR.from);frRender()}
+function frReveal(){
+ const el=fm.children[FR.cur];if(!el)return;const r=el.getBoundingClientRect(),w=wrap.getBoundingClientRect(),p=fpn.getBoundingClientRect();
+ if(r.top<w.top+4||r.bottom>w.bottom-4||(r.bottom>p.top&&r.top<p.bottom&&r.right>p.left&&r.left<p.right))wrap.scrollTop+=r.top-w.top-w.height/2+r.height/2;
+ if(r.left<w.left+4||r.right>w.right-16)wrap.scrollLeft+=r.left-w.left-w.width/3}
+function frGo(k){
+ if(k<0||k>=FR.m.length)return;const o=fm.children[FR.cur];if(o)o.classList.remove("cur");FR.cur=k;const n=fm.children[k];if(n)n.classList.add("cur");
+ FR.from=FR.m[k][0];code.setSelectionRange(FR.m[k][0],FR.m[k][1]);pos();frCount();frReveal()}
+const frStep=d=>{const n=FR.m.length;if(n)frGo(FR.cur<0?0:(FR.cur+d+n)%n)};
+function frRep(){
+ if(!FR.m.length)return;const x=FR.m[FR.cur<0?0:FR.cur],r=fri.value;
+ edit(x[0],x[1],r);FR.from=x[0]+r.length;FR.cur=frPick(FR.from);frRender();frGo(FR.cur)}
+function frAll(){
+ const re=frRe();if(!re)return;const v=code.value,r=fri.value;let n=0;const nv=v.replace(re,()=>(n++,r));
+ if(!n){toast("No matches");return}
+ const nc=v.slice(0,code.selectionStart).replace(re,()=>r).length;
+ edit(0,v.length,nv);code.setSelectionRange(nc,nc);FR.from=nc;frUpdate();pos();
+ toast("Replaced "+n+" occurrence"+(n>1?"s":"")+". Press Ctrl/Cmd+Z to undo.")}
+function frOpen(){
+ const sel=code.value.slice(code.selectionStart,code.selectionEnd);if(sel&&sel.length<=200&&!sel.includes("\n"))FR.q=sel;
+ fq.value=FR.q;FR.from=code.selectionStart;FR.open=true;fpn.classList.add("open");acClose();sgClose();
+ frScan();FR.cur=frPick(FR.from);frRender();fq.focus();fq.select()}
+function frClose(){if(!FR.open)return;FR.open=false;fpn.classList.remove("open");fm.textContent="";code.focus({preventScroll:true})}
+const frQuery=()=>{frScan();FR.cur=frPick(FR.from);frRender();frReveal()};
+fq.oninput=()=>{FR.q=fq.value;frQuery()};
+fq.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();frStep(e.shiftKey?-1:1)}};
+fri.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.ctrlKey&&e.altKey?frAll():frRep()}};
+fpn.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();frClose()}});
+[["fcs","cs"],["fww","ww"]].forEach(([id,k])=>{$(id).onclick=()=>{FR[k]=!FR[k];$(id).setAttribute("aria-pressed",FR[k]);frQuery();fq.focus()}});
+$("fpv").onclick=()=>frStep(-1);$("fnx").onclick=()=>frStep(1);$("frb").onclick=frRep;$("fra").onclick=frAll;$("fcl").onclick=frClose;
+/* Ctrl+H is a browser shortcut (history), so it is intercepted for the whole page. F3 / Shift+F3 step through matches while the panel is open. */
+document.addEventListener("keydown",e=>{
+ const k=(e.key||"").toLowerCase();
+ if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&k==="h"){e.preventDefault();frOpen()}
+ else if(FR.open&&k==="f3"){e.preventDefault();frStep(e.shiftKey?-1:1)}});
+
+/* ===================== 2. IntelliSense =====================
+   Completions and parameter hints come from the TypeScript language service (the same compiler already used to run TS).
+   It is loaded lazily on first typing; until it is ready, or if it can't be loaded, a small keyword/word list is used instead. */
+const LSX={ls:null,ver:0,fv:0,cur:"",txt:"",libs:{},lp:null,warm:false};
+const TS_LIB="https://cdn.jsdelivr.net/npm/typescript@5.4.5/lib/";
+/* Globals of the run sandbox that the standard ES library doesn't declare (the full DOM typings are ~1 MB, so they are not loaded) */
+const AMB=`
+declare var console:{
+ /** Prints a message to the console. */ log(...data:any[]):void;
+ /** Prints an informational message. */ info(...data:any[]):void;
+ /** Prints a warning. */ warn(...data:any[]):void;
+ /** Prints an error. */ error(...data:any[]):void;
+ /** Prints a debug message. */ debug(...data:any[]):void;
+ /** Prints an array or object as a table. */ table(data:any):void;
+ /** Clears the console. */ clear():void};
+/** Shows a prompt and returns the entered text, or null. */ declare function prompt(message?:string,_default?:string):string|null;
+/** Shows a message. */ declare function alert(message?:any):void;
+/** Asks for confirmation. */ declare function confirm(message?:string):boolean;
+/** Calls a function after a delay (ms). */ declare function setTimeout(handler:(...args:any[])=>void,timeout?:number,...args:any[]):number;
+/** Cancels a timeout. */ declare function clearTimeout(id?:number):void;
+/** Calls a function repeatedly every N ms. */ declare function setInterval(handler:(...args:any[])=>void,timeout?:number,...args:any[]):number;
+/** Cancels an interval. */ declare function clearInterval(id?:number):void;
+declare function queueMicrotask(callback:()=>void):void;
+declare function structuredClone<T>(value:T):T;
+declare function fetch(input:string,init?:any):Promise<any>;
+declare var performance:{now():number};
+declare var window:any;
+declare var document:any;
+declare var localStorage:any;
+`;
+function lsInit(){
+ if(LSX.ls)return LSX.ls;if(!window.ts)return null;const ts=window.ts;
+ const host={
+  getProjectVersion:()=>LSX.ver+"",
+  getScriptFileNames:()=>[LSX.cur,"/ambient.d.ts"],
+  getScriptVersion:f=>f===LSX.cur?LSX.fv+"":"1",
+  getScriptSnapshot:f=>{const x=f===LSX.cur?LSX.txt:f==="/ambient.d.ts"?AMB:LSX.libs[f];return typeof x==="string"?ts.ScriptSnapshot.fromString(x):undefined},
+  getCurrentDirectory:()=>"/",
+  getCompilationSettings:()=>({target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.ESNext,allowJs:true,checkJs:false,noEmit:true,noResolve:true,skipLibCheck:true,types:[],moduleDetection:ts.ModuleDetectionKind?ts.ModuleDetectionKind.Force:undefined}),
+  getDefaultLibFileName:()=>"/lib.es2020.d.ts",
+  fileExists:f=>f===LSX.cur||f==="/ambient.d.ts"||typeof LSX.libs[f]==="string",
+  readFile:f=>f===LSX.cur?LSX.txt:f==="/ambient.d.ts"?AMB:LSX.libs[f],
+  useCaseSensitiveFileNames:()=>true};
+ return LSX.ls=ts.createLanguageService(host,ts.createDocumentRegistry())}
+/* Each file is analysed on its own (as a module), named after its tab, so JS and TS files get the right language rules */
+function lsSync(){
+ const t=cur();if(!t)return null;const ls=lsInit();if(!ls)return null;const f="/"+t.name;
+ if(f!==LSX.cur||code.value!==LSX.txt){LSX.cur=f;LSX.txt=code.value;LSX.fv++;LSX.ver++}return ls}
+/* Standard library typings (Math, Array, Promise, ...) are fetched once and followed through their /// <reference lib> chain */
+function lsLibs(){
+ return LSX.lp||(LSX.lp=(async()=>{
+  const get=async n=>{if(n in LSX.libs)return;LSX.libs[n]=null;
+   try{const r=await fetch(TS_LIB+n.slice(1));if(!r.ok)throw 0;const x=await r.text();LSX.libs[n]=x;
+    await Promise.all([...x.matchAll(/\/\/\/\s*<reference\s+lib="([^"]+)"/g)].map(m=>get("/lib."+m[1].toLowerCase()+".d.ts")))}
+   catch(e){delete LSX.libs[n]}};
+  await get("/lib.es2020.d.ts");if(LSX.ls){LSX.ls.dispose();LSX.ls=null}LSX.ver++})())}
+function acWarm(){if(LSX.warm)return;LSX.warm=true;loadTS().catch(()=>{})}
+
+const KIND={"function":["ƒ","fn"],"local function":["ƒ","fn"],method:["m","fn"],construct:["n","fn"],property:["p","id"],getter:["p","id"],setter:["p","id"],"var":["v","id"],"let":["v","id"],"const":["c","id"],"local var":["v","id"],parameter:["a","id"],"class":["C","ty"],"local class":["C","ty"],interface:["I","ty"],type:["T","ty"],"type parameter":["T","ty"],enum:["E","ty"],"enum member":["e","nm"],module:["M","ty"],alias:["@","ty"],keyword:["k","kw"],"primitive type":["t","ty"],string:["s","st"]};
+const KW_JS="break case catch class const continue debugger default delete do else export extends finally for function if import in instanceof let new return super switch this throw try typeof var void while with yield async await of null undefined true false".split(" ");
+const KW_TS="interface type enum implements public private protected readonly static as keyof namespace declare abstract unknown never any string number boolean".split(" ");
+const AC={open:false,all:[],items:[],sel:0,start:0,word:"",tm:0,skip:false,cx:0,cy:0},SG={open:false,raf:0,cx:0,cy:0};
+const acEl=$("ac"),acList=$("ac-list"),acDoc=$("ac-doc"),sgEl=$("sg"),mir=$("mir"),edEl=document.querySelector(".ed"),idc=/^[\w$]+$/;
+const wordAt=p=>/[\w$]*$/.exec(code.value.slice(0,p))[0];
+/* Where a text offset sits inside the scrolling content (x is measured on a hidden mirror with the editor's exact text metrics) */
+function xy(p){
+ const b=code.value.slice(0,p);mir.textContent="";mir.appendChild(document.createTextNode(b));const m=document.createElement("span");m.textContent="\u200b";mir.appendChild(m);
+ return{x:m.offsetLeft,y:18+(b.split("\n").length-1)*fsNow*1.8}}
+function place(el,cx,cy,up){
+ const wr=wrap.getBoundingClientRect(),er=edEl.getBoundingClientRect(),lh=fsNow*1.8,W=edEl.clientWidth,H=edEl.clientHeight,w=el.offsetWidth,h=el.offsetHeight;
+ let x=wr.left-er.left+cx-wrap.scrollLeft;const y=wr.top-er.top+cy-wrap.scrollTop;
+ x=Math.max(6,Math.min(x,W-w-6));let top=up?y-h-2:y+lh+2;
+ if(!up&&top+h>H-4&&y-h-2>=4)top=y-h-2;else if(up&&top<4&&y+lh+h+2<=H-4)top=y+lh+2;
+ el.style.left=x+"px";el.style.top=Math.max(4,top)+"px"}
+function acFallback(p){
+ const b=code.value.slice(0,p),ln=b.slice(b.lastIndexOf("\n")+1),w=wordAt(p);
+ if(/\/\//.test(ln)||(ln.match(/["'`]/g)||[]).length%2||b[b.length-w.length-1]===".")return null;
+ const seen=new Set(),o=[];(lang==="ts"?KW_JS.concat(KW_TS):KW_JS).forEach(k=>{seen.add(k);o.push({n:k,k:"keyword",s:"3"})});
+ (code.value.match(/[A-Za-z_$][\w$]*/g)||[]).forEach(x=>{if(!seen.has(x)&&x!==w){seen.add(x);o.push({n:x,k:"var",s:"1"})}});return o}
+function acSource(p,trig){
+ const ls=lsSync();if(!ls)return acFallback(p);
+ if(!LSX.lp)lsLibs();
+ try{const r=ls.getCompletionsAtPosition(LSX.cur,p,{triggerCharacter:trig,includeCompletionsForModuleExports:false,includeCompletionsWithInsertText:true});
+  if(!r)return null;return r.entries.filter(x=>!x.source).map(x=>({n:x.name,k:x.kind,s:x.sortText||"",ins:x.insertText,span:x.replacementSpan,data:x.data}))}
+ catch(x){return acFallback(p)}}
+function acFilter(){
+ const w=AC.word,lw=w.toLowerCase(),sc=n=>{if(!w)return 4;if(n.startsWith(w))return 0;const l=n.toLowerCase();if(l.startsWith(lw))return 1;if(l.includes(lw))return 2;
+  if(lw.length>1){let j=0;for(const c of l){if(c===lw[j])j++;if(j===lw.length)return 3}}return -1};
+ AC.items=AC.all.map(it=>[it,sc(it.n)]).filter(x=>x[1]>=0).sort((a,b)=>a[1]-b[1]||(a[0].s<b[0].s?-1:a[0].s>b[0].s?1:0)||(a[0].n<b[0].n?-1:1)).map(x=>x[0]).slice(0,80)}
+function acDetail(){
+ acDoc.textContent="";acDoc.classList.remove("has");const it=AC.items[AC.sel],ls=lsSync();if(!it||!ls||it.k==="keyword")return;
+ let d;try{d=ls.getCompletionEntryDetails(LSX.cur,code.selectionStart,it.n,{},undefined,{},it.data)}catch(x){}
+ if(!d)return;const ts=window.ts,sig=ts.displayPartsToString(d.displayParts),doc=ts.displayPartsToString(d.documentation).trim();if(!sig)return;
+ acDoc.textContent=sig;if(doc){const e=document.createElement("div");e.className="d";e.textContent=doc.length>320?doc.slice(0,320)+"…":doc;acDoc.appendChild(e)}
+ acDoc.classList.add("has")}
+function acSel(i){
+ const n=AC.items.length;AC.sel=Math.max(0,Math.min(n-1,i));
+ acList.querySelectorAll(".sel").forEach(x=>{x.classList.remove("sel");x.setAttribute("aria-selected","false")});
+ const li=acList.children[AC.sel];if(!li)return;li.classList.add("sel");li.setAttribute("aria-selected","true");code.setAttribute("aria-activedescendant",li.id);
+ if(li.offsetTop<acList.scrollTop)acList.scrollTop=li.offsetTop-4;else if(li.offsetTop+li.offsetHeight>acList.scrollTop+acList.clientHeight)acList.scrollTop=li.offsetTop+li.offsetHeight-acList.clientHeight+4;
+ acDetail()}
+function acRender(){
+ const n=AC.items.length;if(!n||(n===1&&AC.items[0].n===AC.word)){acClose();return}
+ const w=AC.word,lw=w.toLowerCase();acList.textContent="";
+ AC.items.forEach((it,i)=>{const li=document.createElement("li"),kd=KIND[it.k]||["·","id"],b=document.createElement("span"),nm=document.createElement("span"),ty=document.createElement("span");
+  li.id="ac-i"+i;li.className="ac-i";li.setAttribute("role","option");li.setAttribute("aria-selected","false");li.dataset.i=i;
+  b.className="ac-k "+kd[1];b.textContent=kd[0];nm.className="ac-n";
+  if(w&&it.n.toLowerCase().startsWith(lw)){const bb=document.createElement("b");bb.textContent=it.n.slice(0,w.length);nm.append(bb,it.n.slice(w.length))}else nm.textContent=it.n;
+  ty.className="ac-t";ty.textContent=it.k;li.append(b,nm,ty);acList.appendChild(li)});
+ acList.scrollTop=0;AC.open=true;gsHide();acEl.classList.add("open");code.setAttribute("aria-expanded","true");acSel(AC.sel);place(acEl,AC.cx,AC.cy,false)}
+function acClose(){
+ clearTimeout(AC.tm);if(!AC.open)return;AC.open=false;acEl.classList.remove("open");code.setAttribute("aria-expanded","false");code.removeAttribute("aria-activedescendant")}
+function acRequest(force,trig){
+ if(document.activeElement!==code||code.selectionStart!==code.selectionEnd)return;
+ const p=code.selectionStart,w=wordAt(p);if((!w&&!force)||/^\d/.test(w))return;
+ const all=acSource(p,trig);if(!all||!all.length){acClose();return}
+ AC.all=all;AC.start=p-w.length;AC.word=w;AC.sel=0;acFilter();const c=xy(AC.start);AC.cx=c.x;AC.cy=c.y;acRender()}
+const acSchedule=()=>{clearTimeout(AC.tm);AC.tm=setTimeout(()=>acRequest(false),90)};
+function acAccept(i){
+ const it=AC.items[i===undefined?AC.sel:i];if(!it)return;let s=AC.start,e=code.selectionStart;const t=it.ins||it.n;
+ if(it.span){s=it.span.start;e=Math.max(s+it.span.length,e)}
+ acClose();AC.skip=true;try{edit(s,e,t)}finally{AC.skip=false}}
+/* Typing: open after the first identifier character or "."; keep it in step while the word grows or shrinks; never on paste/delete/Enter */
+function acInput(e){
+ if(AC.skip||e.isComposing||!e.inputType)return;if(!LSX.warm)acWarm();
+ const t=e.inputType,d=e.data||"",p=code.selectionStart;if(p!==code.selectionEnd){acClose();return}
+ if(t==="insertText"&&(d==="("||d==="()"||d===","))setTimeout(sgUpdate,0);
+ const w=wordAt(p),typed=t==="insertText"&&d.length===1,dot=typed&&d===".";
+ if(AC.open){
+  if(dot){acClose();acRequest(true,".")}
+  else if((typed&&idc.test(d))||t==="deleteContentBackward"){if(p-w.length===AC.start){AC.word=w;AC.sel=0;acFilter();acRender()}else acClose()}
+  else acClose();return}
+ if(dot)acRequest(true,".");else if(typed&&idc.test(d)&&/^[A-Za-z_$]/.test(w))acSchedule();else acClose()}
+function acKey(e){
+ if(!AC.open)return false;const k=e.key,n=AC.items.length;
+ if(k==="ArrowDown"||k==="ArrowUp"){acSel((AC.sel+(k==="ArrowDown"?1:-1)+n)%n);return true}
+ if(k==="PageDown"||k==="PageUp"){acSel(AC.sel+(k==="PageDown"?8:-8));return true}
+ if((k==="Enter"||k==="Tab")&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey){acAccept();return true}
+ if(k==="Escape"){acClose();return true}
+ return false}
+/* Caret moved (arrows, click): close if it left the word, otherwise re-filter; keep the parameter hint in step */
+function acSync(){
+ if(AC.open){const p=code.selectionStart,w=code.value.slice(AC.start,p);
+  if(p!==code.selectionEnd||p<AC.start||!/^[\w$]*$/.test(w))acClose();else if(w!==AC.word){AC.word=w;AC.sel=0;acFilter();acRender()}}
+ if(SG.open&&!SG.raf)SG.raf=requestAnimationFrame(()=>{SG.raf=0;if(SG.open)sgUpdate()})}
+/* Parameter hints */
+function sgClose(){if(!SG.open)return;SG.open=false;sgEl.classList.remove("open")}
+function sgUpdate(){
+ const ls=lsSync();if(!ls||document.activeElement!==code||code.selectionStart!==code.selectionEnd){sgClose();return}
+ let r;try{r=ls.getSignatureHelpItems(LSX.cur,code.selectionStart,{triggerReason:{kind:"invoked"}})}catch(x){}
+ if(!r||!r.items.length){sgClose();return}
+ const ts=window.ts,it=r.items[r.selectedItemIndex]||r.items[0],P=x=>ts.displayPartsToString(x),ai=Math.min(r.argumentIndex,it.parameters.length-1);
+ sgEl.textContent="";sgEl.append(P(it.prefixDisplayParts));
+ it.parameters.forEach((q,i)=>{if(i)sgEl.append(P(it.separatorDisplayParts));const e=document.createElement(i===ai?"b":"span");e.textContent=P(q.displayParts);sgEl.appendChild(e)});
+ sgEl.append(P(it.suffixDisplayParts)+(r.items.length>1?"   ("+((r.selectedItemIndex||0)+1)+"/"+r.items.length+")":""));
+ const pd=ai>=0?P(it.parameters[ai].documentation).trim():"",dd=P(it.documentation).trim();
+ if(pd||dd){const d=document.createElement("div");d.className="d";d.textContent=[dd,pd].filter(Boolean).join("\n");sgEl.appendChild(d)}
+ const c=xy(code.selectionStart);SG.cx=c.x;SG.cy=c.y;SG.open=true;sgEl.classList.add("open");place(sgEl,SG.cx,SG.cy,true)}
+acList.addEventListener("mousedown",e=>{e.preventDefault();const li=e.target.closest("li");if(li)acAccept(+li.dataset.i)});
+acList.addEventListener("mousemove",e=>{const li=e.target.closest("li");if(li&&+li.dataset.i!==AC.sel)acSel(+li.dataset.i)});
+wrap.addEventListener("scroll",()=>{if(AC.open)place(acEl,AC.cx,AC.cy,false);if(SG.open)place(sgEl,SG.cx,SG.cy,true)},{passive:true});
+code.addEventListener("blur",()=>{acClose();sgClose()});
+window.addEventListener("resize",()=>{acClose();sgClose()});
+
+/* ===================== Semicolons =====================
+   The TypeScript parser tells us exactly which statements end without ";" (and refuses to guess if the code has syntax errors). */
+function missingSemis(v,l,ghost){
+ const ts=window.ts;if(!ts)return null;let sf;
+ try{sf=ts.createSourceFile(l==="ts"?"a.ts":"a.js",v,{languageVersion:ts.ScriptTarget.ES2020,setExternalModuleIndicator:f=>{f.externalModuleIndicator=f}},true,l==="ts"?ts.ScriptKind.TS:ts.ScriptKind.JS)}catch(x){return null}
+ if(sf.parseDiagnostics&&sf.parseDiagnostics.length)return null;
+ const K=ts.SyntaxKind,need=new Set([K.ExpressionStatement,K.VariableStatement,K.ReturnStatement,K.ThrowStatement,K.BreakStatement,K.ContinueStatement,K.DebuggerStatement,K.ImportDeclaration,K.ExportDeclaration,K.ExportAssignment,K.TypeAliasDeclaration]),out=new Set();
+ const walk=n=>{if(need.has(n.kind)&&v.charAt(n.end-1)!==";"&&!(ghost&&n.kind===K.ExpressionStatement&&(n.expression.kind===K.Identifier||n.expression.kind===K.PropertyAccessExpression)))out.add(n.end);ts.forEachChild(n,walk)};
+ ts.forEachChild(sf,walk);return [...out].sort((a,b)=>a-b)}
+/* Faint ";" after a finished statement on the caret's line. Tab writes it. */
+const GS={on:false,p:0,tm:0,txt:null,miss:[]},gsEl=$("gs");
+function gsHide(){GS.on=false;gsEl.classList.remove("on")}
+const gsSoon=()=>{clearTimeout(GS.tm);GS.tm=setTimeout(gsCalc,60)};
+function gsCalc(){
+ gsHide();if(!window.ts||document.activeElement!==code||code.selectionStart!==code.selectionEnd||AC.open)return;
+ const v=code.value,c=code.selectionStart;
+ if(GS.txt!==v){GS.miss=missingSemis(v,lang,true)||[];GS.txt=v}if(!GS.miss.length)return;
+ const ls=v.lastIndexOf("\n",c-1)+1,le0=v.indexOf("\n",c),le=le0<0?v.length:le0;
+ const m=GS.miss.find(x=>x>=ls&&x<=le&&x<=c&&/^[ \t\r]*(\/\/.*|\/\*.*\*\/[ \t]*)?$/.test(v.slice(x,le)));
+ if(m===undefined)return;
+ const q=xy(m);gsEl.style.left=q.x+"px";gsEl.style.top=q.y+"px";gsEl.classList.add("on");GS.on=true;GS.p=m}
+function gsAccept(){const p=GS.p;gsHide();edit(p,p,";")}
+/* Run: insert what is missing, let the editor show it, then execute */
+async function semiFix(){
+ if(!window.ts){try{await Promise.race([loadTS(),new Promise((_,r)=>setTimeout(r,5000))])}catch(e){return}}
+ const v=code.value,miss=missingSemis(v,lang);if(!miss||!miss.length)return;
+ const c=code.selectionStart;let nv="",i=0;miss.forEach(m=>{nv+=v.slice(i,m)+";";i=m});nv+=v.slice(i);
+ edit(0,v.length,nv);const nc=c+miss.filter(m=>m<c).length;code.setSelectionRange(nc,nc);pos();
+ toast("Added "+miss.length+" missing semicolon"+(miss.length>1?"s":"")+" before running");
+ await new Promise(r=>setTimeout(r,150))}
+
+/* ===================== Template placeholders: ${ variable } ===================== */
+/* Splits a backtick string into plain parts and <span class="ti"> placeholders (data-a/b = offsets in the source) */
+function tpl(t,b,e){
+ let o="",i=0,s=0;const part=(x,y)=>x<y?'<span class="st">'+e(t.slice(x,y))+'</span>':"";
+ while(i<t.length){
+  const ch=t[i];if(ch==="\\"){i+=2;continue}
+  if(ch==="$"&&t[i+1]==="{"){
+   let d=1,j=i+2;while(j<t.length-1){if(t[j]==="{")d++;else if(t[j]==="}"&&!--d)break;j++}
+   const closed=t[j]==="}"&&d===0,end=closed?j+1:j;
+   o+=part(s,i)+'<span class="ti" data-a="'+(b+i)+'" data-b="'+(b+end)+'"><span class="td">${</span><span class="tv">'+e(t.slice(i+2,j))+'</span>'+(closed?'<span class="td">}</span>':"")+'</span>';
+   i=s=end;continue}
+  i++}
+ return o+part(s,t.length)}
+const tpEl=$("tp"),TP={open:false,by:"",span:null,raf:0};
+function tpHide(){if(!TP.open)return;TP.open=false;TP.span=null;TP.by="";tpEl.classList.remove("open")}
+function tpShow(sp,by){
+ if(TP.open&&TP.span&&TP.span.dataset.a===sp.dataset.a&&TP.by===by)return;
+ const ex=(sp.querySelector(".tv")||{}).textContent||"";
+ tpEl.textContent="";
+ const h=document.createElement("div");h.className="th";const o1=document.createElement("i");o1.textContent="${";const o2=document.createElement("i");o2.textContent="}";h.append(o1,ex||"…",o2);tpEl.appendChild(h);
+ const P=(t,c)=>{const p=document.createElement("p");if(c)p.className=c;p.append(...t);tpEl.appendChild(p)};
+ const C=x=>{const c=document.createElement("code");c.textContent=x;return c};
+ P([ex?"This is a template placeholder. The code inside the braces is evaluated and its value is inserted into the string at this spot.":"Type a variable or expression between the braces. Its value will be inserted into the string at this spot."]);
+ P(["Why use it: it builds text from variables without joining pieces with ",C("+"),", e.g. ",C("`Hi ${name}!`"),"."]);
+ const ls=/^[A-Za-z_$][\w$.]*$/.test(ex.trim())?lsSync():null;
+ if(ls){try{const q=ls.getQuickInfoAtPosition(LSX.cur,+sp.dataset.a+2+(ex.length-ex.trimStart().length)),t=q&&window.ts.displayPartsToString(q.displayParts);if(t)P(["Here: "+t],"mu")}catch(x){}}
+ TP.open=true;TP.span=sp;TP.by=by;tpEl.classList.add("open");
+ const r=sp.getClientRects()[0],er=edEl.getBoundingClientRect(),w=tpEl.offsetWidth,hh=tpEl.offsetHeight;
+ let x=Math.max(6,Math.min(r.left-er.left,edEl.clientWidth-w-6)),y=r.top-er.top-hh-6;if(y<4)y=r.bottom-er.top+6;
+ tpEl.style.left=x+"px";tpEl.style.top=y+"px"}
+const tpAt=(cx,cy)=>[...$("hl").querySelectorAll(".ti")].find(sp=>[...sp.getClientRects()].some(r=>cx>=r.left-1&&cx<=r.right+1&&cy>=r.top&&cy<=r.bottom));
+function tpCaret(){
+ if(TP.by==="hover")return;const c=code.selectionStart;
+ const sp=code.selectionEnd===c&&!SG.open?[...$("hl").querySelectorAll(".ti")].find(x=>c>=+x.dataset.a+2&&c<=+x.dataset.b-(x.querySelectorAll(".td").length>1?1:0)):null;
+ if(sp)tpShow(sp,"caret");else if(TP.by==="caret")tpHide()}
+code.addEventListener("mousemove",e=>{if(TP.raf)return;const cx=e.clientX,cy=e.clientY;TP.raf=requestAnimationFrame(()=>{TP.raf=0;const sp=tpAt(cx,cy);if(sp)tpShow(sp,"hover");else if(TP.by==="hover")tpHide()})});
+code.addEventListener("mouseleave",()=>{if(TP.by==="hover")tpHide()});
+code.addEventListener("blur",()=>{tpHide();gsHide()});
+wrap.addEventListener("scroll",tpHide,{passive:true});
+
 function setTheme(t,persist){const r=document.documentElement;t=t==="light"?"light":"dark";r.dataset.theme=t;r.setAttribute("data-bs-theme",t);
  const b=$("th"),n=t==="dark"?"light":"dark",l="Switch to "+n+" mode";b.title=l;b.setAttribute("aria-label",l);
  if(persist){try{localStorage.setItem("theme",t)}catch(e){}}}
